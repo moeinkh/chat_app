@@ -10,6 +10,7 @@
   </head>
   <body style="direction: rtl;">
     <div class="container my-5">
+        <div id="alert"></div>
         <h1 class="my-5">اتاق گفت و گو ({{ username }}{{ username|json_script:"room-name" }})</h1>
         <div class="row">
             <div class="col input-group flex-nowrap mb-3">
@@ -54,6 +55,11 @@
         };
 
         chatSocket.onclose = function(e) {
+            $('#alert').prepend(`
+                <div class="alert alert-danger" role="alert">
+                    شما احراز هویت نشده اید!!!
+                </div>
+            `)
             console.log('Chat socket closed unexpectedly');
         };
 

@@ -6,14 +6,18 @@ class Chat(WebsocketConsumer):
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['username']
         self.room_group_name = 'chat_%s' % self.room_name
+        self.user = self.scope['user']
 
-        # Join room group
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
-            self.channel_name
-        )
+        if self.user.is_authenticated:
+            # Join room group
+            async_to_sync(self.channel_layer.group_add)(
+                self.room_group_name,
+                self.channel_name
+            )
 
-        self.accept()
+            self.accept()
+        else:
+            self.close()    
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
@@ -25,7 +29,6 @@ class Chat(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         username_receiver = text_data_json['receiver']
         username_receiver_group = f'chat_{username_receiver}'
-        print(text_data_json)
 
         async_to_sync(self.channel_layer.group_send)(
             username_receiver_group, 
