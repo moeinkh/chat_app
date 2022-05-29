@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>چت روم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>  
+  </head>
+  <body style="direction: rtl;">
+    <div class="container my-5">
+        <h1 class="my-5">اتاق گفت و گو ({{ username }}{{ username|json_script:"room-name" }})</h1>
+        <div class="row">
+            <div class="col input-group flex-nowrap mb-3">
+                <input type="text" id="message_input" class="form-control" placeholder="متن پیام" aria-label="Username" aria-describedby="basic-addon1">
+            </div>
+            <div style="direction: ltr;" class="col input-group flex-nowrap mb-3">
+                <span class="input-group-text" id="basic-addon1">@</span>
+                <input type="text" class="form-control" id="username_receiver" placeholder="نام کاربری گیرنده" aria-label="Username" aria-describedby="basic-addon1">
+            </div>
+        </div>
+        <div class="my-2">
+            <button class="btn btn-info" id="msg_sub">ارسال</button>
+        </div>
+        <div class="mb-3">
+          <div id="message-list"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    <script>
+        const my_username = JSON.parse(document.getElementById('room-name').textContent);
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/'
+            + my_username
+            + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const message = JSON.parse(e.data)
+            // document.querySelector('#chat_log').value += (data.message + '\n')
+            console.log(message['message']['sender'])
+            $('#message-list').prepend(`
+                <div class='media mb-2 border rounded p-2'>
+                    <div class='media-body'>
+                        <h2 class='mt-0'>USERNAME</h2>
+                        MESSAGE
+                    </div>
+                </div>
+            `.replace('USERNAME', message['message']['sender']).replace('MESSAGE', message['message']['text']))
+        };
+
+        chatSocket.onclose = function(e) {
+            console.log('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#msg_sub').onclick = function (e) {
+            var username_receiver = document.querySelector('#username_receiver').value;
+
+            var messageInputDom = document.querySelector('#message_input');
+            var message = messageInputDom.value;
+            $('#message-list').prepend(`
+                <div class='media mb-2 border rounded p-2 bg-info text-left'>
+                    <div class='media-body'>
+                        <h2 class='mt-0'>You</h2>
+                        MESSAGE
+                    </div>
+                </div>
+            `.replace('MESSAGE', message))
+
+            chatSocket.send(JSON.stringify({'sender': my_username, 'receiver': username_receiver, 'text': message}))
+        }
+
+    </script>
+</body>
+</html>
